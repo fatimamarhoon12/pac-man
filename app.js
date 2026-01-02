@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const scoreDisplay = document.getElementById('score');
+    const timeDisplay = document.getElementById('time');
     const width = 28;
     let score = 0;
-    let lives = 3;
-    let isPaused = false;
+    let Timer = 180;
+    let timerId = null;
+    //let lives = 3;
+    //let isPaused = false;
     const grid = document.querySelector('.grid');
 
     const layout = [
@@ -71,11 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard();
 
     //creat character
-    let pacmanCurrentIndex = 490;
+    let pacmanCurrentIndex = 490; //pac-man at index 490 
     squares[pacmanCurrentIndex].classList.add('pac-man');
 
     function movePacman(e) {
-        squares[pacmanCurrentIndex].classList.remove('pac-man');
+        squares[pacmanCurrentIndex].classList.remove('pac-man'); // to remove pac man form the privious index يعني لما يتحرك تنشال الصورة القبلية مالته 
         switch (e.key) {
             case 'ArrowLeft':
                 if (pacmanCurrentIndex % width !== 0 && !squares[pacmanCurrentIndex - 1].classList.contains('wall') && !squares[pacmanCurrentIndex - 1].classList.contains('ghost-lair')) {
@@ -114,28 +117,30 @@ document.addEventListener('DOMContentLoaded', () => {
         checkForGameOver();
     }
     document.addEventListener('keyup', movePacman);
-   
+
 
 
     function pacDotEaten() {
         if (squares[pacmanCurrentIndex].classList.contains('pac-dot')) {
-            score++;
+            // dose pac man eat the dot ? 
+            score++; // if yes , ++ socre 
             scoreDisplay.innerHTML = score;
-            squares[pacmanCurrentIndex].classList.remove('pac-dot');
+            squares[pacmanCurrentIndex].classList.remove('pac-dot'); // to remove the pac dot if eat it 
         }
     }
     function powerPelletEaten() {
         if (squares[pacmanCurrentIndex].classList.contains('power-pellet')) {
+            // same as the dot , but here ++ 10 
             score += 10;
-            scoreDisplay.innerHTML = score;
-            ghosts.forEach(ghost => ghost.isScared = true);
-            setTimeout(unScareGhosts, 10000);
+            scoreDisplay.innerHTML = score; // to display the number at the score 
+            ghosts.forEach(ghost => ghost.isScared = true); // pac man can eat the ghost for some times 10s 
+            setTimeout(unScareGhosts, 10000); // after the  10s == isScared== flase 
 
             squares[pacmanCurrentIndex].classList.remove('power-pellet');
         }
     }
     function unScareGhosts() {
-        ghosts.forEach(ghost => ghost.isScared = false);
+        ghosts.forEach(ghost => ghost.isScared = false); // the ghost back to normal 
     }
     class Ghost {
         constructor(className, startIndex, speed) {
@@ -156,28 +161,27 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
     ghosts.forEach(ghost => {
         squares[ghost.startIndex].classList.add(ghost.className);
-        squares
     });
 
     ghosts.forEach(ghost => moveGhost(ghost));
 
     function moveGhost(ghost) {
 
-        const directions = [-1, +1, -width, +width];
+        const directions = [-1, +1, -width, +width]; //-1 move left , +1 right , -width up , +width down
         let direction = directions[Math.floor(Math.random() * directions.length)];
 
         ghost.timerId = setInterval(function () {
-            if (
+            if ( //make sure  move next seq is not wall and there are no ghost 
                 !squares[ghost.currentIndex + direction].classList.contains('ghost') &&
                 !squares[ghost.currentIndex + direction].classList.contains('wall')
             ) {
                 squares[ghost.currentIndex].classList.remove(ghost.className, 'ghost', 'scared-ghost');
-                ghost.currentIndex += direction;
+                ghost.currentIndex += direction; // update the current direction 
                 squares[ghost.currentIndex].classList.add(ghost.className, 'ghost');
             } else direction = directions[Math.floor(Math.random() * directions.length)];
 
             if (ghost.isScared) {
-                squares[ghost.currentIndex].classList.add('scared-ghost');
+                squares[ghost.currentIndex].classList.add('scared-ghost'); //if the ghosts scared pac man can eat them
             }
 
             if (ghost.isScared && squares[ghost.currentIndex].classList.contains('pac-man')) {
@@ -185,21 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 ghost.currentIndex = ghost.startIndex;
                 score += 100;
                 scoreDisplay.innerHTML = score;
-                squares[ghost.currentIndex].classList.add(ghost.className, 'ghost');
+                squares[ghost.currentIndex].classList.add(ghost.className, 'ghost'); // if pac man eat the ghost , return back the ghost to the startIndex to start again 
             }
-            checkForGameOver();
+            checkForGameOver(); // if the ghost eat pac man == game over 
 
         }, ghost.speed);
     }
     function checkForGameOver() {
-        if (squares[pacmanCurrentIndex].classList.contains('ghost') &&
-            !squares[pacmanCurrentIndex].classList.contains('scared-ghost')) {
-            ghosts.forEach(ghost => clearInterval(ghost.timerId));
-            document.removeEventListener('keyup', movePacman);
+        if (Timer <= 0 || (squares[pacmanCurrentIndex].classList.contains('ghost') &&
+            !squares[pacmanCurrentIndex].classList.contains('scared-ghost'))) {
+            ghosts.forEach(ghost => clearInterval(ghost.timerId)); // stop the move of the ghost if eat pac man 
+            document.removeEventListener('keyup', movePacman); // stop pac man move
+            clearInterval(timerId);
             setTimeout(function () {
                 alert('Game Over! Your score is ' + score);
             }, 500);
         }
+
     }
     function checkForWin() {
         if (score >= 274) {
@@ -210,5 +216,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         }
     }
-    
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+    function startTimer() {
+
+        timerId = setInterval(function () {
+            Timer--;
+            console.log("Time remining" +  formatTime(Timer));
+            timeDisplay.innerHTML = formatTime(Timer);
+        }, 1000);
+
+    }
+    startTimer();
+
 });
