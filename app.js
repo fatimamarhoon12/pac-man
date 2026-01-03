@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const scoreDisplay = document.getElementById('score');
     const timeDisplay = document.getElementById('time');
+    const livesDisplay = document.getElementById('lives');
     const width = 28;
+    const PacmanStart = 490;
     let score = 0;
     let Timer = 180;
     let timerId = null;
-    //let lives = 3;
+    let lives = 4;
     //let isPaused = false;
     const grid = document.querySelector('.grid');
 
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ]
+    livesDisplay.innerHTML=lives;
 
     // 0 - pac-dots
     // 1 - wall
@@ -74,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard();
 
     //creat character
-    let pacmanCurrentIndex = 490; //pac-man at index 490 
+    let pacmanCurrentIndex = PacmanStart; //pac-man at index 490 
     squares[pacmanCurrentIndex].classList.add('pac-man');
 
     function movePacman(e) {
@@ -113,10 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
         squares[pacmanCurrentIndex].classList.add('pac-man');
         pacDotEaten();
         powerPelletEaten();
+        KillPacman();
         checkForWin();
         checkForGameOver();
     }
-    document.addEventListener('keyup', movePacman);
+    document.addEventListener('keydown', movePacman);
 
 
 
@@ -150,6 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.currentIndex = startIndex;
             this.isScared = false;
             this.timerId = NaN;
+        }
+
+        respawn() {
+            squares[this.currentIndex].classList.remove(this.className);
+            squares[this.currentIndex].classList.remove('ghost');
+            this.currentIndex = this.startIndex;
         }
     }
     ghosts = [
@@ -195,11 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }, ghost.speed);
     }
+
+    // live<=0 , timer < =0 , die
     function checkForGameOver() {
-        if (Timer <= 0 || (squares[pacmanCurrentIndex].classList.contains('ghost') &&
-            !squares[pacmanCurrentIndex].classList.contains('scared-ghost'))) {
+        if (lives <= 0 || Timer <= 0) {
             ghosts.forEach(ghost => clearInterval(ghost.timerId)); // stop the move of the ghost if eat pac man 
-            document.removeEventListener('keyup', movePacman); // stop pac man move
+            document.removeEventListener('keydown', movePacman); // stop pac man move
             clearInterval(timerId);
             setTimeout(function () {
                 alert('Game Over! Your score is ' + score);
@@ -210,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkForWin() {
         if (score >= 274) {
             ghosts.forEach(ghost => clearInterval(ghost.timerId));
-            document.removeEventListener('keyup', movePacman);
+            document.removeEventListener('keydown', movePacman);
             setTimeout(function () {
                 alert('You Win! Your score is ' + score);
             }, 500);
@@ -225,11 +236,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         timerId = setInterval(function () {
             Timer--;
-            console.log("Time remining" +  formatTime(Timer));
             timeDisplay.innerHTML = formatTime(Timer);
         }, 1000);
 
     }
     startTimer();
 
+    function KillPacman() {
+        if (squares[pacmanCurrentIndex].classList.contains('ghost') &&
+            !squares[pacmanCurrentIndex].classList.contains('scared-ghost')) {
+            ghosts.forEach(ghost => ghost.respawn());
+            squares[pacmanCurrentIndex].classList.remove('pac-man');
+            pacmanCurrentIndex = PacmanStart;
+            squares[pacmanCurrentIndex].classList.add('pac-man');
+            lives--;
+            livesDisplay.innerHTML = lives;
+            console.log("number"+lives);
+
+        }
+        
+
+    }
+
+
 });
+
